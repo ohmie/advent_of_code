@@ -314,4 +314,83 @@ defmodule Advent16 do
       end)
     end
   end
+
+  defmodule Day8 do
+    defp set_lights([_, "rect", size], lights) do
+      [_, width, height] = Regex.run(~r/(\d+)x(\d+)/, size)
+      width = String.to_integer(width) - 1
+      height = String.to_integer(height) - 1
+
+      MapSet.union(lights, make_grid(0, 0, width, height))
+    end
+
+    defp set_lights([_, "rotate row", y, amount], lights) do
+      [_, y] = Regex.run(~r/y=(\d+)/, y)
+      y = String.to_integer(y)
+      amount = String.to_integer(amount)
+      slice = make_grid(0, y, 49, y)
+
+      slice = MapSet.intersection(lights, slice)
+
+      lights = MapSet.difference(lights, slice)
+
+      slice =
+        slice
+        |> Enum.map(fn {x, y} -> {rem(x + amount, 50), y} end)
+        |> MapSet.new()
+
+      MapSet.union(lights, slice)
+    end
+
+    defp set_lights([_, "rotate column", x, amount], lights) do
+      [_, x] = Regex.run(~r/x=(\d+)/, x)
+      x = String.to_integer(x)
+      amount = String.to_integer(amount)
+      slice = make_grid(x, 0, x, 5)
+
+      slice = MapSet.intersection(lights, slice)
+
+      lights = MapSet.difference(lights, slice)
+
+      slice =
+        slice
+        |> Enum.map(fn {x, y} -> {x, rem(y + amount, 6)} end)
+        |> MapSet.new()
+
+      MapSet.union(lights, slice)
+    end
+
+    defp make_grid(x1, y1, x2, y2) do
+      grid = for x <- x1..x2, y <- y1..y2, do: {x, y}
+      grid |> MapSet.new()
+    end
+
+    def main do
+      Advent15.stream!("16/8")
+      |> Stream.map(
+        &Regex.run(
+          ~r/(rect|rotate row|rotate column) ((?:\d+x\d+)|(?:[xy]=\d+))(?: by )?(\d+)?/,
+          &1
+        )
+      )
+      |> Enum.reduce(MapSet.new(), &set_lights/2)
+    end
+
+    def part1 do
+      main()
+      |> Enum.count()
+    end
+
+    def part2 do
+      results = main()
+
+      for y <- 0..5 do
+        for x <- 0..49 do
+          if MapSet.member?(results, {x, y}), do: IO.write("#"), else: IO.write(" ")
+        end
+
+        IO.write("\n")
+      end
+    end
+  end
 end
