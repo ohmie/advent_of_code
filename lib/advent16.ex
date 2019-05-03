@@ -254,4 +254,64 @@ defmodule Advent16 do
       |> elem(0)
     end
   end
+
+  defmodule Day7 do
+    def part1() do
+      Advent16.stream!("16/7")
+      |> Stream.map(&String.split(&1, ["[", "]"]))
+      |> Stream.filter(&filter_tls/1)
+      |> Stream.reject(&reject_tls/1)
+      |> Enum.count()
+    end
+
+    def filter_tls(list), do: test_abba(list)
+
+    def reject_tls([_h | rest]), do: test_abba(rest)
+
+    def test_abba(list) do
+      list
+      |> Enum.take_every(2)
+      |> Enum.reduce(false, fn x, acc ->
+        acc || String.match?(x, ~r/(.)(?!\1)(.)(?=\2\1)/)
+      end)
+    end
+
+    @spec part2() :: non_neg_integer()
+    def part2() do
+      Advent16.stream!("16/7")
+      |> Stream.map(&String.split(&1, ["[", "]"]))
+      |> Stream.filter(&test_aba/1)
+      |> Enum.count()
+    end
+
+    def test_aba(list) do
+      matches1 =
+        matches_for_aba(list)
+        |> MapSet.new()
+
+      [_ | rest] = list
+
+      matches2 =
+        matches_for_aba(rest)
+        |> Enum.map(&String.reverse/1)
+        |> MapSet.new()
+
+      MapSet.intersection(matches1, matches2)
+      |> MapSet.size()
+      |> Kernel.>(0)
+    end
+
+    def matches_for_aba(list) do
+      list
+      |> Enum.take_every(2)
+      |> Enum.reduce([], fn x, acc ->
+        matches =
+          Regex.scan(~r/(.)(?!\1)(?=(.)\1)/, x)
+          |> Enum.map(&Enum.slice(&1, 1, 2))
+          |> Enum.map(&Enum.join/1)
+
+        acc ++ matches
+      end)
+    end
+  end
 end
