@@ -228,4 +228,30 @@ defmodule Advent16 do
     defp apply_char(nil, x, y, acc), do: List.replace_at(acc, x, y) |> IO.inspect()
     defp apply_char(_, _, _, acc), do: acc
   end
+
+  defmodule Day6 do
+    defp main(comparison) do
+      0..7
+      |> Enum.map(&find_column(&1, comparison))
+      |> Enum.join()
+    end
+
+    def part1() do
+      main(&Enum.max_by/2)
+    end
+
+    def part2() do
+      main(&Enum.min_by/2)
+    end
+
+    defp find_column(column, comparison) do
+      Advent16.stream!("16/6")
+      |> Stream.map(&String.at(&1, column))
+      |> Enum.reduce(%{}, fn x, acc ->
+        Map.put(acc, x, Map.get(acc, x, 0) + 1)
+      end)
+      |> comparison.(fn {_, num} -> num end)
+      |> elem(0)
+    end
+  end
 end
