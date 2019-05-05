@@ -393,4 +393,57 @@ defmodule Advent16 do
       end
     end
   end
+
+  defmodule Day9 do
+    def part1 do
+      input = Advent16.read!("16/9")
+
+      parse(0, input, false)
+    end
+
+    def part2 do
+      input = Advent16.read!("16/9")
+
+      parse(0, input, true)
+    end
+
+    def parse(done, input, expand?) do
+      results = Regex.run(~r/\(.*?\)/, input, return: :index)
+
+      if results == nil do
+        done + String.length(input)
+      else
+        [{code_index, code_length}] = results
+
+        compression_code = String.slice(input, code_index, code_length)
+        [_, length, repeats] = Regex.run(~r/\((\d+)x(\d+)\)/, compression_code)
+        length = String.to_integer(length)
+        repeats = String.to_integer(repeats)
+
+        decompressed = String.slice(input, code_index + code_length, length)
+
+        i =
+          if expand? do
+            code_index
+          else
+            code_index + String.length(decompressed) * repeats
+          end
+
+        decompressed =
+          Stream.cycle([decompressed])
+          |> Enum.take(repeats - 1)
+          |> Enum.join()
+
+        input = String.replace(input, ~r/\(.*?\)/, decompressed, global: false)
+
+        {newly_done, input} = String.split_at(input, i)
+
+        parse(
+          done + String.length(newly_done),
+          input,
+          expand?
+        )
+      end
+    end
+  end
 end
